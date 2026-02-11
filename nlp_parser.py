@@ -69,8 +69,17 @@ class NLPParser:
             verbs = [token.lemma_ for token in doc if token.pos_ == "VERB"]
             nouns = [token.text for token in doc if token.pos_ == "NOUN"]
             
-            if verbs:
-                command["intent"] = verbs[0]
+            # Map common verb lemmas to intents
+            verb_to_intent = {
+                "attack": "attack", "fight": "attack", "hit": "attack", 
+                "strike": "attack", "kill": "attack",
+                "pick": "pickup", "get": "pickup", "take": "pickup", 
+                "grab": "pickup",
+                "use": "use", "drink": "use", "equip": "use", "wear": "use"
+            }
+            
+            if verbs and verbs[0] in verb_to_intent:
+                command["intent"] = verb_to_intent[verbs[0]]
             if nouns:
                 command["target"] = nouns[0]
         

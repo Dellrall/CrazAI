@@ -22,7 +22,7 @@ class GameEngine:
     def attack_enemy(self, enemy_name):
         """Attack an enemy and receive counter-attack."""
         if not self.player.is_alive:
-            return "You are dead! Game over."
+            return "You have been slain! Game Over."
         
         # Player attacks
         player_damage = random.randint(10, 30)
