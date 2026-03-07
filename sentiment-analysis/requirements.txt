@@ -1,0 +1,31 @@
+# Core
+pandas>=2.0
+numpy>=1.24
+
+# NLP & Text Processing
+nltk>=3.8
+spacy>=3.5
+
+# Feature Extraction
+scikit-learn>=1.3
+gensim>=4.3
+
+# Deep Learning / Transformers
+torch>=2.0
+transformers>=4.30
+
+# Web Crawling
+requests>=2.31
+beautifulsoup4>=4.12
+
+# Visualization
+matplotlib>=3.7
+seaborn>=0.12
+
+# Utilities
+tqdm>=4.65
+joblib>=1.3
+
+# Web Interface
+streamlit>=1.28
+plotly>=5.15

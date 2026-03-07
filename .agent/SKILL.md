@@ -1448,14 +1448,6 @@ sentiment-analysis/
 │   ├── processed/                 # Cleaned & preprocessed data
 │   ├── feedback/                  # User feedback JSONL files
 │   └── imdb/                      # IMDB dataset
-├── notebooks/
-│   ├── 01_data_exploration.ipynb
-│   ├── 02_preprocessing.ipynb
-│   ├── 03_naive_bayes.ipynb
-│   ├── 04_svm.ipynb
-│   ├── 05_bert.ipynb
-│   ├── 06_comparison.ipynb
-│   └── 07_online_learning.ipynb
 ├── outputs/
 │   ├── model_comparison.png
 │   ├── confusion_matrices.png
@@ -1524,13 +1516,13 @@ plotly>=5.15            # Interactive charts for stats dashboard
 - [ ] Implement text cleaning pipeline
 - [ ] Implement tokenization, stemming, lemmatization
 - [ ] Implement feature extraction (BoW, TF-IDF, Word2Vec)
-- [ ] Exploratory data analysis notebook
+- [ ] Exploratory data analysis (run via main.py or Streamlit)
 
 ### Week 5–6: Model A — Naïve Bayes
 - [ ] Implement Naïve Bayes with TF-IDF features
 - [ ] Tune hyperparameters (alpha, max_features)
 - [ ] Evaluate with Accuracy, Precision, Recall, F1
-- [ ] Document results in notebook
+- [ ] Document results
 
 ### Week 7–8: Model B — SVM
 - [ ] Implement SVM with TF-IDF / Word2Vec features

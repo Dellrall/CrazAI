@@ -1,0 +1,21 @@
+# Virtual environment
+venv/
+
+# Datasets (large, re-downloadable)
+data/imdb/
+data/raw/
+data/processed/
+data/feedback/
+
+# Model checkpoints
+outputs/bert_model/
+*.pkl
+*.tar.gz
+
+# Streamlit cache
+.streamlit/
+
+# Python
+__pycache__/
+*.py[co]
+.pytest_cache/
