@@ -59,3 +59,15 @@ class NaiveBayesModel:
         """Return class probabilities for new texts."""
         X = self.vectorizer.transform(texts)
         return self.model.predict_proba(X)
+
+    def update(self, texts: list[str], labels: list[int]) -> None:
+        """Incrementally update classifier with feedback samples.
+
+        Keeps the existing TF-IDF vocabulary — only updates the NB
+        classifier weights via partial_fit. Very fast (no vectorizer refit).
+        """
+        if not self.is_trained:
+            raise RuntimeError("Model must be trained before calling update().")
+        X = self.vectorizer.transform(texts)
+        self.model.partial_fit(X, np.array(labels), classes=[0, 1])
+

@@ -209,7 +209,7 @@ with tab_demo:
         placeholder="Paste a movie review, tweet, or any sentence here..."
     )
 
-    analyse_btn = st.button("🔍 Analyse Sentiment", type="primary", use_container_width=True)
+    analyse_btn = st.button("🔍 Analyse Sentiment", type="primary", width="stretch")
 
     if analyse_btn and user_input.strip():
         processed, tokens = preprocess_text(user_input, cleaner, tokenizer)
@@ -297,7 +297,7 @@ with tab_feedback:
             correct_label = st.selectbox("What's the correct sentiment?", ["Negative", "Positive"])
 
         model_that_erred = st.radio("Which model got it wrong?", ["Naïve Bayes", "SVM", "Online Learner", "All"], horizontal=True)
-        submitted = st.form_submit_button("✅ Submit Correction", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("✅ Submit Correction", type="primary", width="stretch")
 
     if submitted and fb_text.strip():
         orig_int = 1 if original_pred == "Positive" else 0
@@ -365,21 +365,18 @@ with tab_feedback:
 
         # Batch retrain button
         st.divider()
-        if st.button("🔁 Retrain NB & SVM on all feedback data", use_container_width=True):
+        if st.button("🔁 Update NB model on feedback data", width="stretch"):
             all_feedback = collector.load_all()
             if all_feedback:
                 processed_all = [preprocess_text(e['text'], cleaner, tokenizer)[0] for e in all_feedback]
                 labels_all = [e['corrected_label'] for e in all_feedback]
-                # Combine with original training data and retrain
-                all_texts = df['processed'].tolist() + processed_all
-                all_labels = df['label'].tolist() + labels_all
-                # Retrain directly on the cached model objects
-                nb.train(all_texts, all_labels)
-                svm.train(all_texts, all_labels)
-                st.success(f"✅ NB & SVM retrained with {len(all_feedback)} extra feedback samples!")
-                # Clear the resource cache so the next prediction uses the freshly trained models
-                load_and_train_models.clear()
-                st.rerun()
+                # Use partial_fit on NB — keeps the existing TF-IDF vectorizer,
+                # only updates the classifier weights. Fast and safe.
+                nb.update(processed_all, labels_all)
+                # Also sync the online learner with all feedback
+                online.update(processed_all, labels_all)
+                st.success(f"✅ Naïve Bayes updated with {len(all_feedback)} feedback samples via partial_fit!")
+                st.info("ℹ️ SVM is a batch model and cannot be updated incrementally — it keeps its original IMDB training.")
             else:
                 st.warning("No feedback collected yet.")
     else:
