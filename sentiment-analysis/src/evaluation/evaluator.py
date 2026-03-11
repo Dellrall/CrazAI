@@ -2,8 +2,6 @@
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     classification_report, confusion_matrix, ConfusionMatrixDisplay
@@ -51,6 +49,7 @@ class ModelEvaluator:
 
     def plot_comparison(self, save_path: str = 'outputs/model_comparison.png'):
         """Bar chart comparing model performance."""
+        import matplotlib.pyplot as plt
         df = self.comparison_table()
         metric_cols = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
 
@@ -76,6 +75,7 @@ class ModelEvaluator:
 
     def plot_confusion_matrices(self, save_path: str = 'outputs/confusion_matrices.png'):
         """Plot confusion matrix for each model side-by-side."""
+        import matplotlib.pyplot as plt
         n = len(self.results)
         if n == 0:
             print("No results to plot.")
