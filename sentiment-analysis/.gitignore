@@ -10,6 +10,7 @@ data/feedback/
 # Model checkpoints
 outputs/bert_model/
 *.pkl
+*.joblib
 *.tar.gz
 
 # Streamlit cache
