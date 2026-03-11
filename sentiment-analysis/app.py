@@ -373,9 +373,13 @@ with tab_feedback:
                 # Combine with original training data and retrain
                 all_texts = df['processed'].tolist() + processed_all
                 all_labels = df['label'].tolist() + labels_all
+                # Retrain directly on the cached model objects
                 nb.train(all_texts, all_labels)
                 svm.train(all_texts, all_labels)
                 st.success(f"✅ NB & SVM retrained with {len(all_feedback)} extra feedback samples!")
+                # Clear the resource cache so the next prediction uses the freshly trained models
+                load_and_train_models.clear()
+                st.rerun()
             else:
                 st.warning("No feedback collected yet.")
     else:
