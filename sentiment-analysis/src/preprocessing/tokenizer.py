@@ -13,8 +13,15 @@ for resource in ['punkt', 'punkt_tab', 'stopwords', 'wordnet']:
 # Words that signal negation scope.  We keep these OUT of the stop-word filter
 # so they survive long enough to be used by mark_negations().
 _NEGATION_WORDS = {
+    # Base negation words
     "not", "no", "never", "neither", "nor", "nobody", "nothing", "nowhere",
     "hardly", "scarcely", "barely", "without",
+    # Contractions WITH apostrophe (tokenized as a separate n't token)
+    "n't",
+    # Contractions WITHOUT apostrophe — casual/informal writing
+    "dont", "doesnt", "didnt", "wont", "wouldnt", "shouldnt", "couldnt",
+    "cant", "cannot", "isnt", "arent", "wasnt", "werent", "hasnt", "havent",
+    "hadnt", "aint", "neednt", "mustnt",
 }
 
 # Punctuation that ends a negation scope (resets the _NEG flag)
