@@ -24,8 +24,11 @@ class TextCleaner:
         text = re.sub(r'http\S+|www\.\S+', '', text)
         # Remove mentions and hashtags
         text = re.sub(r'@\w+|#\w+', '', text)
-        # Remove special characters and numbers
-        text = re.sub(r'[^a-zA-Z\s]', '', text)
+        # Remove special characters and numbers (keep apostrophes for contractions
+        # like "don't", and keep clause-boundary punctuation for negation scope detection)
+        text = re.sub(r"[^a-zA-Z'.,!?;:\s]", '', text)
+        # Collapse stray apostrophes not inside words (e.g. lone ' at start/end)
+        text = re.sub(r"(?<![a-zA-Z])'|'(?![a-zA-Z])", ' ', text)
         # Remove extra whitespace
         text = re.sub(r'\s+', ' ', text).strip()
         # Lowercase
