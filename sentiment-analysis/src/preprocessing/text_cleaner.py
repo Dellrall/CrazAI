@@ -6,6 +6,13 @@ import re
 class TextCleaner:
     """Clean raw text: remove noise, special characters, HTML tags."""
 
+    # Small, high-confidence idiom rewrites. These normalize colloquial phrases
+    # before tokenization so the sentiment model sees the intended polarity.
+    _IDIOM_REWRITES = (
+        (re.compile(r'\bbad[\s-]*ass\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bbadass\b', flags=re.IGNORECASE), 'awesome'),
+    )
+
     @staticmethod
     def clean(text: str) -> str:
         """Apply full cleaning pipeline to a text string.
@@ -24,6 +31,10 @@ class TextCleaner:
         text = re.sub(r'http\S+|www\.\S+', '', text)
         # Remove mentions and hashtags
         text = re.sub(r'@\w+|#\w+', '', text)
+        # Normalize a few high-confidence idioms before punctuation stripping so
+        # slang like "bad ass" is treated as positive rather than negative.
+        for pattern, replacement in TextCleaner._IDIOM_REWRITES:
+            text = pattern.sub(replacement, text)
         # Remove special characters and numbers (keep apostrophes for contractions
         # like "don't", and keep clause-boundary punctuation for negation scope detection)
         text = re.sub(r"[^a-zA-Z'.,!?;:\s]", '', text)

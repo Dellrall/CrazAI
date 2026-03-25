@@ -62,6 +62,11 @@ class TestTextCleaner(unittest.TestCase):
         result = self.cleaner.clean('')
         self.assertEqual(result, '')
 
+    def test_normalizes_bad_ass_idiom(self):
+        result = self.cleaner.clean('Bad ass of a movie')
+        self.assertIn('awesome', result)
+        self.assertNotIn('bad ass', result)
+
 
 class TestTextTokenizer(unittest.TestCase):
 
@@ -111,7 +116,12 @@ class TestTextTokenizer(unittest.TestCase):
         self.assertIn('entirely_NEG', tokens)
         self.assertIn('convincing_NEG', tokens)
         self.assertNotIn('not', tokens)
-        
+
+    def test_preprocess_handles_bad_ass_idiom(self):
+        tokens = self.tokenizer.preprocess('Bad ass of a movie')
+
+        self.assertIn('awesome', tokens)
+        self.assertNotIn('bad', tokens)
 
 
 class TestFeatureExtractor(unittest.TestCase):

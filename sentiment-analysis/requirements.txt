@@ -4,6 +4,8 @@ numpy>=1.24
 
 # NLP & Text Processing
 nltk>=3.8
+spacy>=3.7
+negspacy>=1.0.4
 
 # Feature Extraction
 scikit-learn>=1.3
