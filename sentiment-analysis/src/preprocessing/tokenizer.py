@@ -27,6 +27,43 @@ _NEGATION_WORDS = {
 # Punctuation that ends a negation scope (resets the _NEG flag)
 _SCOPE_ENDERS = re.compile(r'^[.!?,;:]$')
 
+# Common sentiment words with an easy polarity flip. This is intentionally
+# small and high-precision so phrases like "not bad" can contribute a positive
+# signal while still keeping the original negated token.
+_NEGATION_POLARITY_FLIP = {
+    "bad": "good",
+    "good": "bad",
+    "great": "awful",
+    "greatest": "worst",
+    "excellent": "terrible",
+    "amazing": "awful",
+    "awesome": "awful",
+    "fantastic": "dreadful",
+    "wonderful": "horrible",
+    "positive": "negative",
+    "negative": "positive",
+    "love": "hate",
+    "loved": "hated",
+    "like": "dislike",
+    "liked": "disliked",
+    "hate": "love",
+    "hated": "loved",
+    "dislike": "like",
+    "disliked": "liked",
+    "boring": "exciting",
+    "dull": "engaging",
+    "terrible": "great",
+    "awful": "excellent",
+    "horrible": "wonderful",
+    "worst": "best",
+    "poor": "strong",
+    "weak": "strong",
+    "disappointing": "satisfying",
+    "ugly": "beautiful",
+    "beautiful": "ugly",
+    "best": "worst",
+}
+
 
 class TextTokenizer:
     """Tokenize text and apply optional negation tagging, stemming/lemmatization."""
@@ -124,6 +161,22 @@ class TextTokenizer:
                 out.append(self.lemmatizer.lemmatize(t))
         return out
 
+    def expand_negated_polarity(self, tokens: list[str]) -> list[str]:
+        """Add a flipped sentiment cue for known negated sentiment words.
+
+        We keep the original ``_NEG`` token so the model can learn from both the
+        explicit negation marker and the polarity-flipped token.
+        """
+        out: list[str] = []
+        for token in tokens:
+            out.append(token)
+            if token.endswith('_NEG'):
+                base = token[:-4].lower()
+                flipped = _NEGATION_POLARITY_FLIP.get(base)
+                if flipped:
+                    out.append(flipped)
+        return out
+
     # ──────────────────────────────────────────────────
     # Full pipeline
     # ──────────────────────────────────────────────────
@@ -131,7 +184,8 @@ class TextTokenizer:
     def preprocess(self, text: str, use_lemma: bool = True) -> list[str]:
         """Full preprocessing pipeline.
 
-        Order: tokenize → negation tagging → remove stopwords → stem/lemmatize.
+        Order: tokenize → negation tagging → remove stopwords → stem/lemmatize →
+        expand negated polarity cues.
 
         Negation tagging MUST happen before stop-word removal so that the
         negation trigger words are still present when we scan for them.
@@ -146,4 +200,5 @@ class TextTokenizer:
             tokens = self.lemmatize(tokens)
         else:
             tokens = self.stem(tokens)
+        tokens = self.expand_negated_polarity(tokens)
         return tokens

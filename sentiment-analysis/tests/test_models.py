@@ -94,6 +94,16 @@ class TestTextTokenizer(unittest.TestCase):
         self.assertNotIn('the', lower_tokens)
         self.assertNotIn('were', lower_tokens)
 
+    def test_preprocess_handles_negation_flip(self):
+        positive_tokens = self.tokenizer.preprocess('This movie is not bad')
+        negative_tokens = self.tokenizer.preprocess('This movie is not good')
+
+        self.assertIn('bad_NEG', positive_tokens)
+        self.assertIn('good', positive_tokens)
+
+        self.assertIn('good_NEG', negative_tokens)
+        self.assertIn('bad', negative_tokens)
+
 
 class TestFeatureExtractor(unittest.TestCase):
 
