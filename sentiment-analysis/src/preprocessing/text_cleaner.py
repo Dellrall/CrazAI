@@ -6,6 +6,8 @@ import re
 class TextCleaner:
     """Clean raw text: remove noise, special characters, HTML tags."""
 
+    _ELONGATION_RE = re.compile(r'(.)\1{2,}')
+
     # Small, high-confidence idiom and slang rewrites. These normalize
     # colloquial phrases and emoticons before tokenization so the sentiment
     # model sees the intended polarity.
@@ -31,6 +33,23 @@ class TextCleaner:
     )
 
     @staticmethod
+    def _normalize_elongations(text: str) -> str:
+        """Collapse exaggerated character repetitions into a stable form.
+
+        Runs of 3+ repeated vowels are reduced to two characters so words like
+        "goooood" become "good". Runs of 3+ repeated consonants are reduced to
+        one character so words like "goooooddddddd" also normalize correctly.
+        """
+
+        def replace(match: re.Match[str]) -> str:
+            char = match.group(1)
+            if char.lower() in 'aeiouy':
+                return char * 2
+            return char
+
+        return TextCleaner._ELONGATION_RE.sub(replace, text)
+
+    @staticmethod
     def clean(text: str) -> str:
         """Apply full cleaning pipeline to a text string.
 
@@ -48,6 +67,9 @@ class TextCleaner:
         text = re.sub(r'http\S+|www\.\S+', '', text)
         # Remove mentions and hashtags
         text = re.sub(r'@\w+|#\w+', '', text)
+        # Normalize elongated spellings before idiom rewriting so repeated
+        # letters like "goooooddddddd" collapse into a stable sentiment cue.
+        text = TextCleaner._normalize_elongations(text)
         # Normalize a few high-confidence idioms before punctuation stripping so
         # slang like "bad ass" is treated as positive rather than negative.
         for pattern, replacement in TextCleaner._IDIOM_REWRITES:

@@ -84,6 +84,11 @@ class TestTextCleaner(unittest.TestCase):
         self.assertNotIn('wtf', result)
         self.assertNotIn(':(', result)
 
+    def test_normalizes_elongated_spelling(self):
+        result = self.cleaner.clean('This movie is goooooddddddd')
+        self.assertIn('good', result)
+        self.assertNotIn('goooooddddddd', result)
+
 
 class TestTextTokenizer(unittest.TestCase):
 
@@ -148,6 +153,19 @@ class TestTextTokenizer(unittest.TestCase):
 
         self.assertIn('awesome', tokens)
         self.assertNotIn('lol', tokens)
+
+    def test_preprocess_handles_elongated_spelling(self):
+        cleaned = self.cleaner.clean('This movie is goooooddddddd')
+        tokens = self.tokenizer.preprocess(cleaned)
+
+        self.assertIn('good', tokens)
+
+    def test_preprocess_corrects_dictionary_misspelling(self):
+        cleaned = self.cleaner.clean('This movie was greaat')
+        tokens = self.tokenizer.preprocess(cleaned)
+
+        self.assertIn('great', tokens)
+        self.assertNotIn('greaat', tokens)
 
 
 class TestFeatureExtractor(unittest.TestCase):

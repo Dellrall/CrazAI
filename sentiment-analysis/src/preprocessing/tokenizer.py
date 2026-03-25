@@ -6,6 +6,8 @@ from nltk.tokenize import word_tokenize
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 from nltk.corpus import stopwords
 
+from src.preprocessing.dictionary_normalizer import DictionaryNormalizer
+
 # Download required NLTK data (safe to call multiple times)
 for resource in ['punkt', 'punkt_tab', 'stopwords', 'wordnet']:
     nltk.download(resource, quiet=True)
@@ -71,6 +73,7 @@ class TextTokenizer:
     def __init__(self):
         self.stemmer = PorterStemmer()
         self.lemmatizer = WordNetLemmatizer()
+        self.dictionary_normalizer = DictionaryNormalizer()
         # Build a stop-word set that does NOT include negation words, so they
         # are kept when we call remove_stopwords() during preprocessing.
         raw_stops = set(stopwords.words('english'))
@@ -198,8 +201,8 @@ class TextTokenizer:
     def preprocess(self, text: str, use_lemma: bool = True) -> list[str]:
         """Full preprocessing pipeline.
 
-        Order: tokenize → negation tagging → remove stopwords → stem/lemmatize →
-        expand negated polarity cues.
+        Order: tokenize → dictionary normalization → negation tagging →
+        remove stopwords → stem/lemmatize → expand negated polarity cues.
 
         Negation tagging MUST happen before stop-word removal so that the
         negation trigger words are still present when we scan for them.
@@ -208,6 +211,7 @@ class TextTokenizer:
         too, so we leave them in to aid interpretability.
         """
         tokens = self.tokenize(text)
+        tokens = self.dictionary_normalizer.normalize_tokens(tokens)
         tokens = self.mark_negations(tokens)
         tokens = self.remove_stopwords(tokens)
         if use_lemma:
