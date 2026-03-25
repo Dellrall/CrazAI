@@ -6,6 +6,7 @@ numpy>=1.24
 nltk>=3.8
 spacy>=3.7
 negspacy>=1.0.4
+emoji>=2.11.0
 
 # Feature Extraction
 scikit-learn>=1.3
