@@ -6,11 +6,28 @@ import re
 class TextCleaner:
     """Clean raw text: remove noise, special characters, HTML tags."""
 
-    # Small, high-confidence idiom rewrites. These normalize colloquial phrases
-    # before tokenization so the sentiment model sees the intended polarity.
+    # Small, high-confidence idiom and slang rewrites. These normalize
+    # colloquial phrases and emoticons before tokenization so the sentiment
+    # model sees the intended polarity.
     _IDIOM_REWRITES = (
         (re.compile(r'\bbad[\s-]*ass\b', flags=re.IGNORECASE), 'awesome'),
         (re.compile(r'\bbadass\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\blit\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bfire\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bsick\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bdope\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\blol\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\blmao\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\brofl\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bw00t\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\byay\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'\bxoxo\b', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'<3', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r':-?\)|;\-?\)|:d', flags=re.IGNORECASE), 'awesome'),
+        (re.compile(r'(?::-?\(|:-?/|:\'\()', flags=re.IGNORECASE), 'awful'),
+        (re.compile(r'\bwtf\b', flags=re.IGNORECASE), 'awful'),
+        (re.compile(r'\bsmh\b', flags=re.IGNORECASE), 'awful'),
+        (re.compile(r'\bugh\b', flags=re.IGNORECASE), 'awful'),
     )
 
     @staticmethod

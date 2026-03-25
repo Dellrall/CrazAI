@@ -67,11 +67,29 @@ class TestTextCleaner(unittest.TestCase):
         self.assertIn('awesome', result)
         self.assertNotIn('bad ass', result)
 
+    def test_normalizes_lit_slang(self):
+        result = self.cleaner.clean('This movie is lit')
+        self.assertIn('awesome', result)
+        self.assertNotIn('lit', result)
+
+    def test_normalizes_laughing_slang_and_emoticons(self):
+        result = self.cleaner.clean('lol that ending was great :)')
+        self.assertIn('awesome', result)
+        self.assertNotIn('lol', result)
+        self.assertNotIn(':)', result)
+
+    def test_normalizes_negative_reaction_slang(self):
+        result = self.cleaner.clean('wtf was that scene :(')
+        self.assertIn('awful', result)
+        self.assertNotIn('wtf', result)
+        self.assertNotIn(':(', result)
+
 
 class TestTextTokenizer(unittest.TestCase):
 
     def setUp(self):
         self.tokenizer = TextTokenizer()
+        self.cleaner = TextCleaner()
 
     def test_tokenize_returns_list(self):
         tokens = self.tokenizer.tokenize('hello world')
@@ -118,10 +136,18 @@ class TestTextTokenizer(unittest.TestCase):
         self.assertNotIn('not', tokens)
 
     def test_preprocess_handles_bad_ass_idiom(self):
-        tokens = self.tokenizer.preprocess('Bad ass of a movie')
+        cleaned = self.cleaner.clean('Bad ass of a movie')
+        tokens = self.tokenizer.preprocess(cleaned)
 
         self.assertIn('awesome', tokens)
         self.assertNotIn('bad', tokens)
+
+    def test_preprocess_handles_emoticon_normalization(self):
+        cleaned = self.cleaner.clean('lol that ending was great :)')
+        tokens = self.tokenizer.preprocess(cleaned)
+
+        self.assertIn('awesome', tokens)
+        self.assertNotIn('lol', tokens)
 
 
 class TestFeatureExtractor(unittest.TestCase):
