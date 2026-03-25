@@ -164,17 +164,31 @@ class TextTokenizer:
     def expand_negated_polarity(self, tokens: list[str]) -> list[str]:
         """Add a flipped sentiment cue for known negated sentiment words.
 
-        We keep the original ``_NEG`` token so the model can learn from both the
-        explicit negation marker and the polarity-flipped token.
+        For known sentiment words, we replace the negated form with the flipped
+        token so phrases like ``not bad`` become a positive cue rather than
+        still carrying the word ``bad`` in the final feature stream.
+
+        For tokens we cannot confidently flip, we keep the ``_NEG`` form so the
+        model can still learn from the negation signal.
         """
         out: list[str] = []
         for token in tokens:
-            out.append(token)
+            lower = token.lower()
+
+            # Negation trigger words are useful while tagging, but they are not
+            # helpful as final model features once the scope has been encoded.
+            if lower in _NEGATION_WORDS or lower == "n't":
+                continue
+
             if token.endswith('_NEG'):
                 base = token[:-4].lower()
                 flipped = _NEGATION_POLARITY_FLIP.get(base)
                 if flipped:
                     out.append(flipped)
+                else:
+                    out.append(token)
+            else:
+                out.append(token)
         return out
 
     # ──────────────────────────────────────────────────

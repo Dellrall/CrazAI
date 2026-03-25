@@ -98,11 +98,20 @@ class TestTextTokenizer(unittest.TestCase):
         positive_tokens = self.tokenizer.preprocess('This movie is not bad')
         negative_tokens = self.tokenizer.preprocess('This movie is not good')
 
-        self.assertIn('bad_NEG', positive_tokens)
         self.assertIn('good', positive_tokens)
+        self.assertNotIn('bad', positive_tokens)
+        self.assertNotIn('not', positive_tokens)
 
-        self.assertIn('good_NEG', negative_tokens)
         self.assertIn('bad', negative_tokens)
+        self.assertNotIn('good', negative_tokens)
+
+    def test_preprocess_preserves_unflipped_negation(self):
+        tokens = self.tokenizer.preprocess('This is not entirely convincing')
+
+        self.assertIn('entirely_NEG', tokens)
+        self.assertIn('convincing_NEG', tokens)
+        self.assertNotIn('not', tokens)
+        
 
 
 class TestFeatureExtractor(unittest.TestCase):
