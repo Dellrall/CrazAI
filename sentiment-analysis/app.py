@@ -100,9 +100,14 @@ def load_and_train_models(sample_size: int = None):
 
     cleaner = TextCleaner()
     tokenizer = TextTokenizer()
-    df['cleaned'] = df['text'].apply(cleaner.clean)
-    df['tokens'] = df['cleaned'].apply(tokenizer.preprocess)
-    df['processed'] = df['tokens'].apply(lambda t: ' '.join(t))
+    
+    # Skip preprocessing if we already have the fully processed column
+    if 'processed' not in df.columns:
+        if 'cleaned' not in df.columns:
+            df['cleaned'] = df['text'].apply(cleaner.clean)
+        if 'tokens' not in df.columns:
+            df['tokens'] = df['cleaned'].apply(tokenizer.preprocess)
+        df['processed'] = df['tokens'].apply(lambda t: ' '.join(t))
 
     texts = df['processed'].tolist()
     labels = df['label'].tolist()

@@ -20,6 +20,15 @@ class DatasetLoader:
         """
         archive_path = os.path.join(data_dir, 'aclImdb_v1.tar.gz')
         extracted_dir = os.path.join(data_dir, 'aclImdb')
+        processed_path = os.path.join('data', 'processed', 'imdb_processed.csv')
+
+        if os.path.exists(processed_path):
+            df = pd.read_csv(processed_path)
+            if 'processed' not in df.columns and 'text' in df.columns:
+                df['cleaned'] = df['text']
+                df['processed'] = df['text']
+            print(f"Loaded {len(df)} samples from cached IMDB dataset")
+            return df
 
         if not os.path.exists(extracted_dir):
             os.makedirs(data_dir, exist_ok=True)
