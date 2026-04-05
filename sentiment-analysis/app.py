@@ -273,7 +273,7 @@ with tab_demo:
                         yaxis=dict(range=[0, 1.1], showticklabels=False),
                         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)'
                     )
-                    st.plotly_chart(fig, use_container_width=True)
+                    st.plotly_chart(fig, width='stretch')
 
         else:
             model = nb if model_choice == "Naïve Bayes" else svm
@@ -391,7 +391,7 @@ with tab_feedback:
         feed_df['text'] = feed_df['text'].apply(lambda x: x[:80] + '...' if len(x) > 80 else x)
         st.dataframe(
             feed_df[['timestamp', 'model_name', 'original_prediction', 'corrected_label', 'text']],
-            use_container_width=True, hide_index=True
+            width='stretch', hide_index=True
         )
 
         # Batch retrain button
@@ -449,13 +449,13 @@ with tab_stats:
     )
     fig.update_layout(yaxis=dict(range=[0.8, 1.0]), height=350,
                       plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
     saved = load_csv_results()
     if saved is not None:
         st.divider()
         st.subheader("📄 Full Pipeline Results (`outputs/results.csv`)")
-        st.dataframe(saved, use_container_width=True)
+        st.dataframe(saved, width='stretch')
 
 # ══════════════════════════════════════════════
 # TAB 4: Dataset Explorer
@@ -476,24 +476,25 @@ with tab_explore:
         color_discrete_sequence=["#34d399", "#f87171"], title="Class Distribution"
     )
     fig_pie.update_layout(height=300)
-    st.plotly_chart(fig_pie, use_container_width=True)
+    st.plotly_chart(fig_pie, width='stretch')
 
-    df['word_count'] = df['processed'].apply(lambda x: len(x.split()))
+    text_column = 'processed' if 'processed' in df.columns else 'text'
+    df['word_count'] = df[text_column].astype(str).apply(lambda x: len(x.split()))
     fig_hist = px.histogram(
         df, x='word_count', color=df['label'].map({1: 'Positive', 0: 'Negative'}),
-        nbins=50, title="Word Count Distribution (after preprocessing)",
+        nbins=50, title="Word Count Distribution",
         color_discrete_map={"Positive": "#34d399", "Negative": "#f87171"},
         labels={'word_count': 'Word Count'}
     )
     fig_hist.update_layout(height=280, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig_hist, use_container_width=True)
+    st.plotly_chart(fig_hist, width='stretch')
 
     st.subheader("Sample Reviews")
     n_samples = st.slider("Show N samples", 5, 50, 10)
     sample_df = df[['text', 'label']].sample(n=n_samples, random_state=42).copy()
     sample_df['label'] = sample_df['label'].map({1: '😊 Positive', 0: '😟 Negative'})
     sample_df['text'] = sample_df['text'].apply(lambda x: x[:150] + '...' if len(x) > 150 else x)
-    st.dataframe(sample_df, use_container_width=True, hide_index=True)
+    st.dataframe(sample_df, width='stretch', hide_index=True)
 
 # ══════════════════════════════════════════════
 # TAB 5: How It Works (User Guide)
