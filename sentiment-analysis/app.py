@@ -49,6 +49,40 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────────
+# Check dataset availability (BEFORE cache)
+# ─────────────────────────────────────────────
+
+processed_csv = DATA_DIR / 'processed' / 'imdb_processed.csv'
+
+def check_dataset_availability():
+    """Check if dataset is ready before loading models."""
+    if not processed_csv.exists():
+        st.error("❌ **Dataset not found**")
+        st.info(
+            "The preprocessed IMDB dataset is missing. "
+            "Run this **one-time setup** to download and preprocess:\n\n"
+            "```bash\n"
+            "python3 setup_dataset.py\n"
+            "```\n\n"
+            "This will:\n"
+            "1. Download IMDB reviews (~80MB)\n"
+            "2. Preprocess (clean, tokenize, lemmatize)\n"
+            "3. Save to `data/processed/imdb_processed.csv`\n\n"
+            "**Takes 2-3 minutes, runs only once.**"
+        )
+        return False
+    return True
+
+# Check on first load only
+if 'dataset_checked' not in st.session_state:
+    st.session_state.dataset_checked = check_dataset_availability()
+
+if not st.session_state.dataset_checked:
+    st.stop()
+
+# ─────────────────────────────────────────────
+
+# ─────────────────────────────────────────────
 # Custom CSS
 # ─────────────────────────────────────────────
 
@@ -104,54 +138,28 @@ def preprocess_text(text: str, cleaner: TextCleaner, tokenizer: TextTokenizer) -
 def load_and_train_models(sample_size: int = None):
     """Load IMDB data and train NB + SVM + OnlineLearner. Cached after first run."""
     loader = DatasetLoader()
-    print("[DEBUG] Loading dataset...")
     df = loader.load_imdb(str(DATA_DIR / 'imdb'))
-    print(f"[DEBUG] Dataset loaded: {len(df)} rows, columns: {list(df.columns)}")
     
     if len(df) == 0:
-        st.error("❌ Dataset failed to load. Please run: `python3 setup_dataset.py`")
-        st.stop()
+        raise RuntimeError("Failed to load dataset")
     
     if sample_size:
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
-        print(f"[DEBUG] Sampled to {len(df)} rows")
 
-    cleaner = TextCleaner()
-    tokenizer = TextTokenizer()
-    
-    # CRITICAL: Check for 'processed' column FIRST
-    # Lemmatization takes ~2 sec/text. 50K rows = 27+ hours if re-processing!
+    # Dataset should already have 'processed' column from setup_dataset.py
     if 'processed' not in df.columns:
-        print("[DEBUG] ⚠️ 'processed' column missing! Auto-preprocessing...")
-        print(f"[DEBUG] This will take ~{len(df) * 2 / 3600:.1f} hours for {len(df)} rows")
-        
-        # Only allow preprocessing on small samples locally
-        if len(df) > 5000:
-            st.error(f"❌ Dataset too large to auto-preprocess ({len(df):,} rows)\n\n"
-                    f"Would take ~{len(df) * 2 / 3600:.1f}+ hours.")
-            st.info("**Solution:** Run this once:\n"
-                   "```bash\n"
-                   "python3 setup_dataset.py\n"
-                   "```")
-            st.stop()
-        
-        with st.spinner("⏳ Preprocessing dataset (slow - 2s per row)..."):
-            if 'cleaned' not in df.columns:
-                print("[DEBUG] Cleaning text...")
-                df['cleaned'] = df['text'].apply(cleaner.clean)
-            
-            if 'tokens' not in df.columns:
-                print("[DEBUG] Tokenizing...")
-                df['tokens'] = df['cleaned'].apply(tokenizer.preprocess)
-            
-            df['processed'] = df['tokens'].apply(lambda t: ' '.join(t))
-            print("[DEBUG] Preprocessing complete")
-    else:
-        print("[DEBUG] Using cached 'processed' column ✓")
+        # This shouldn't happen if check_dataset_availability() passed
+        raise RuntimeError(
+            "Dataset missing 'processed' column. "
+            "Run: python3 setup_dataset.py"
+        )
 
     texts = df['processed'].tolist()
     labels = df['label'].tolist()
 
+    cleaner = TextCleaner()
+    tokenizer = TextTokenizer()
+    
     nb = NaiveBayesModel(max_features=50000)
     svm = SVMModel(max_features=50000)
 
