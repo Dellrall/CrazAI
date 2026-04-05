@@ -4,9 +4,14 @@ import os
 import json
 import joblib
 import numpy as np
+from pathlib import Path
 from datetime import datetime
 from sklearn.linear_model import SGDClassifier
 from sklearn.feature_extraction.text import HashingVectorizer
+
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.parent.parent
+OUTPUT_DIR = BASE_DIR / 'outputs'
 
 
 class OnlineLearner:
@@ -16,7 +21,7 @@ class OnlineLearner:
     so the model can be updated one batch at a time without full retraining.
     """
 
-    def __init__(self, model_path: str = 'outputs/online_model.pkl'):
+    def __init__(self, model_path: str = None):
         # HashingVectorizer: stateless, no need to fit - works for online learning
         self.vectorizer = HashingVectorizer(
             n_features=2 ** 17,
@@ -33,7 +38,9 @@ class OnlineLearner:
             random_state=42,
             warm_start=True
         )
-        self.model_path = model_path
+        if model_path is None:
+            model_path = OUTPUT_DIR / 'online_model.pkl'
+        self.model_path = Path(model_path).resolve()
         self.is_initialized = False
         self.update_history: list[dict] = []
         self.total_feedback = 0
@@ -100,21 +107,28 @@ class OnlineLearner:
 
     def save(self):
         """Save model to disk."""
-        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
-        joblib.dump({
-            'model': self.model,
-            'history': self.update_history,
-            'total_feedback': self.total_feedback,
-            'is_initialized': self.is_initialized
-        }, self.model_path)
+        try:
+            self.model_path.parent.mkdir(parents=True, exist_ok=True)
+            joblib.dump({
+                'model': self.model,
+                'history': self.update_history,
+                'total_feedback': self.total_feedback,
+                'is_initialized': self.is_initialized
+            }, str(self.model_path))
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save model: {e}")
 
     def load(self) -> bool:
         """Load previously saved model. Returns True if loaded."""
-        if os.path.exists(self.model_path):
-            data = joblib.load(self.model_path)
-            self.model = data['model']
-            self.update_history = data['history']
-            self.total_feedback = data['total_feedback']
-            self.is_initialized = data['is_initialized']
-            return True
+        if self.model_path.exists():
+            try:
+                data = joblib.load(self.model_path)
+                self.model = data['model']
+                self.update_history = data['history']
+                self.total_feedback = data['total_feedback']
+                self.is_initialized = data['is_initialized']
+                return True
+            except (OSError, PermissionError) as e:
+                print(f"⚠️ Warning: Could not load model: {e}")
+                return False
         return False

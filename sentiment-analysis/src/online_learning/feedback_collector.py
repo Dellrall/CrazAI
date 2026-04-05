@@ -2,7 +2,12 @@
 
 import json
 import os
+from pathlib import Path
 from datetime import datetime
+
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.parent.parent
+FEEDBACK_DIR = BASE_DIR / 'data' / 'feedback'
 
 
 class FeedbackCollector:
@@ -12,9 +17,14 @@ class FeedbackCollector:
     append-only persistence without loading the entire file.
     """
 
-    def __init__(self, feedback_path: str = 'data/feedback/corrections.jsonl'):
-        self.feedback_path = feedback_path
-        os.makedirs(os.path.dirname(feedback_path), exist_ok=True)
+    def __init__(self, feedback_path: str = None):
+        if feedback_path is None:
+            feedback_path = FEEDBACK_DIR / 'corrections.jsonl'
+        self.feedback_path = Path(feedback_path).resolve()
+        try:
+            self.feedback_path.parent.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError):
+            pass  # Ignore on read-only filesystems
 
     def record(
         self,
@@ -41,20 +51,27 @@ class FeedbackCollector:
             'confidence': confidence,
             'timestamp': datetime.now().isoformat()
         }
-        with open(self.feedback_path, 'a', encoding='utf-8') as f:
-            f.write(json.dumps(entry) + '\n')
+        try:
+            with open(self.feedback_path, 'a', encoding='utf-8') as f:
+                f.write(json.dumps(entry) + '\n')
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save feedback: {e}")
 
     def load_all(self) -> list[dict]:
         """Load all feedback entries from the JSONL file."""
-        if not os.path.exists(self.feedback_path):
+        if not self.feedback_path.exists():
             return []
-        entries = []
-        with open(self.feedback_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line:
-                    entries.append(json.loads(line))
-        return entries
+        try:
+            entries = []
+            with open(self.feedback_path, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        entries.append(json.loads(line))
+            return entries
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not load feedback: {e}")
+            return []
 
     def load_pending(self, min_count: int = 5) -> list[dict]:
         """Load feedback that hasn't been used for training yet.

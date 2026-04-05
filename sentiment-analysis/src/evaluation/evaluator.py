@@ -2,10 +2,15 @@
 
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     classification_report, confusion_matrix, ConfusionMatrixDisplay
 )
+
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.parent.parent
+OUTPUT_DIR = BASE_DIR / 'outputs'
 
 
 def evaluate(y_true, y_pred) -> dict:
@@ -47,9 +52,13 @@ class ModelEvaluator:
             })
         return pd.DataFrame(rows)
 
-    def plot_comparison(self, save_path: str = 'outputs/model_comparison.png'):
+    def plot_comparison(self, save_path: str = None):
         """Bar chart comparing model performance."""
         import matplotlib.pyplot as plt
+        if save_path is None:
+            save_path = OUTPUT_DIR / 'model_comparison.png'
+        save_path = Path(save_path)
+        
         df = self.comparison_table()
         metric_cols = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
 
@@ -69,13 +78,22 @@ class ModelEvaluator:
         ax.legend()
         ax.set_ylim(0, 1.0)
         plt.tight_layout()
-        plt.savefig(save_path, dpi=150)
-        plt.close()
-        print(f"Comparison chart saved to {save_path}")
+        try:
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(str(save_path), dpi=150)
+            print(f"Comparison chart saved to {save_path}")
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save comparison chart: {e}")
+        finally:
+            plt.close()
 
-    def plot_confusion_matrices(self, save_path: str = 'outputs/confusion_matrices.png'):
+    def plot_confusion_matrices(self, save_path: str = None):
         """Plot confusion matrix for each model side-by-side."""
         import matplotlib.pyplot as plt
+        if save_path is None:
+            save_path = OUTPUT_DIR / 'confusion_matrices.png'
+        save_path = Path(save_path)
+        
         n = len(self.results)
         if n == 0:
             print("No results to plot.")
@@ -93,6 +111,13 @@ class ModelEvaluator:
             ax.set_title(f'{name}')
 
         plt.tight_layout()
-        plt.savefig(save_path, dpi=150)
+        try:
+            save_path.parent.mkdir(parents=True, exist_ok=True)
+            plt.savefig(str(save_path), dpi=150)
+            print(f"Confusion matrices saved to {save_path}")
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save confusion matrices: {e}")
+        finally:
+            plt.close()
         plt.close()
         print(f"Confusion matrices saved to {save_path}")

@@ -23,8 +23,16 @@ Usage:
 import argparse
 import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.absolute()
+sys.path.insert(0, str(BASE_DIR))
+OUTPUT_DIR = BASE_DIR / 'outputs'
+DATA_DIR = BASE_DIR / 'data'
+
+# Ensure output directory exists
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 from src.crawler.dataset_loader import DatasetLoader
 from src.preprocessing.text_cleaner import TextCleaner
@@ -50,7 +58,7 @@ def load_and_preprocess(sample_size: int = None) -> tuple:
         (df, texts, labels) where texts are preprocessed joined strings.
     """
     # Load
-    df = DatasetLoader.load_imdb('data/imdb')
+    df = DatasetLoader.load_imdb(str(DATA_DIR / 'imdb'))
     if sample_size:
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
         print(f"  Sampled {len(df)} rows for quick run")
@@ -111,7 +119,7 @@ def run_bert(texts: list, labels: list, epochs: int = 3, batch_size: int = 16) -
     print(f"  Training on {int(len(texts)*0.8):,} samples, testing on {int(len(texts)*0.2):,}")
     print(f"  epochs={epochs}, batch_size={batch_size}")
     metrics = bert.train(texts, labels, epochs=epochs, batch_size=batch_size)
-    bert.save('outputs/bert_model')
+    bert.save(str(OUTPUT_DIR / 'bert_model'))
     return metrics, bert
 
 
@@ -124,11 +132,11 @@ def print_comparison(evaluator: ModelEvaluator):
     df = evaluator.comparison_table()
     print("\n" + df.to_string(index=False))
 
-    evaluator.plot_comparison('outputs/model_comparison.png')
-    evaluator.plot_confusion_matrices('outputs/confusion_matrices.png')
+    evaluator.plot_comparison(str(OUTPUT_DIR / 'model_comparison.png'))
+    evaluator.plot_confusion_matrices(str(OUTPUT_DIR / 'confusion_matrices.png'))
 
     # Save CSV
-    df.to_csv('outputs/results.csv', index=False)
+    df.to_csv(OUTPUT_DIR / 'results.csv', index=False)
     print("\n  Results saved to outputs/results.csv")
 
 

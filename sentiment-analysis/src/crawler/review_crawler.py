@@ -3,18 +3,26 @@
 import csv
 import random
 import time
+from pathlib import Path
 from typing import Optional
 
 import requests
 from bs4 import BeautifulSoup
 
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.parent.parent
+RAW_DATA_DIR = BASE_DIR / 'data' / 'raw'
+
+
 
 class ReviewCrawler:
     """Web crawler to collect review data from forums/review sites."""
 
-    def __init__(self, base_url: str, output_file: str = 'data/raw/crawled_reviews.csv'):
+    def __init__(self, base_url: str, output_file: Optional[str] = None):
         self.base_url = base_url
-        self.output_file = output_file
+        if output_file is None:
+            output_file = RAW_DATA_DIR / 'crawled_reviews.csv'
+        self.output_file = Path(output_file).resolve()
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (compatible; SentimentBot/1.0; +research)'
         }
@@ -55,10 +63,13 @@ class ReviewCrawler:
 
     def save_to_csv(self):
         """Save crawled reviews to CSV."""
-        import os
-        os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
-        with open(self.output_file, 'w', newline='', encoding='utf-8') as f:
-            writer = csv.DictWriter(f, fieldnames=['text', 'rating', 'source_url'])
-            writer.writeheader()
-            writer.writerows(self.reviews)
-        print(f"Saved {len(self.reviews)} reviews to {self.output_file}")
+        try:
+            self.output_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.output_file, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=['text', 'rating', 'source_url'])
+                writer.writeheader()
+                writer.writerows(self.reviews)
+            print(f"Saved {len(self.reviews)} reviews to {self.output_file}")
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save to {self.output_file}: {e}")
+            print(f"Data remains in memory ({len(self.reviews)} reviews)")

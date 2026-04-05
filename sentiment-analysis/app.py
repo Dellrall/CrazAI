@@ -10,6 +10,7 @@ Run with:
 import os
 import sys
 import json
+from pathlib import Path
 
 import pandas as pd
 import numpy as np
@@ -17,7 +18,16 @@ import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.absolute()
+sys.path.insert(0, str(BASE_DIR))
+OUTPUT_DIR = BASE_DIR / 'outputs'
+FEEDBACK_DIR = BASE_DIR / 'data' / 'feedback'
+DATA_DIR = BASE_DIR / 'data'
+
+# Ensure output directories exist
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+FEEDBACK_DIR.mkdir(parents=True, exist_ok=True)
 
 from src.crawler.dataset_loader import DatasetLoader
 from src.preprocessing.text_cleaner import TextCleaner
@@ -94,7 +104,7 @@ def preprocess_text(text: str, cleaner: TextCleaner, tokenizer: TextTokenizer) -
 def load_and_train_models(sample_size: int = None):
     """Load IMDB data and train NB + SVM + OnlineLearner. Cached after first run."""
     loader = DatasetLoader()
-    df = loader.load_imdb('data/imdb')
+    df = loader.load_imdb(str(DATA_DIR / 'imdb'))
     if sample_size:
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
 
@@ -119,7 +129,7 @@ def load_and_train_models(sample_size: int = None):
     svm_metrics = svm.train(texts, labels, test_size=0.2)
 
     # Seed the online learner with the same training data
-    online = OnlineLearner('outputs/online_model.pkl')
+    online = OnlineLearner(str(OUTPUT_DIR / 'online_model.pkl'))
     if not online.load():
         online.initialize(texts, labels)
 
@@ -128,13 +138,13 @@ def load_and_train_models(sample_size: int = None):
 
 @st.cache_resource(show_spinner=False)
 def get_feedback_collector():
-    return FeedbackCollector('data/feedback/corrections.jsonl')
+    return FeedbackCollector(str(FEEDBACK_DIR / 'corrections.jsonl'))
 
 
 @st.cache_resource(show_spinner=False)
 def load_csv_results():
-    path = 'outputs/results.csv'
-    if os.path.exists(path):
+    path = OUTPUT_DIR / 'results.csv'
+    if path.exists():
         return pd.read_csv(path)
     return None
 

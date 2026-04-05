@@ -2,6 +2,7 @@
 
 import numpy as np
 import torch
+from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 from transformers import (
@@ -13,6 +14,10 @@ from torch.optim import AdamW
 from tqdm import tqdm
 
 from src.evaluation.evaluator import evaluate
+
+# Get absolute paths
+BASE_DIR = Path(__file__).parent.parent.parent
+OUTPUT_DIR = BASE_DIR / 'outputs'
 
 
 class SentimentDataset(Dataset):
@@ -188,18 +193,27 @@ class BERTSentimentModel:
 
         return predictions
 
-    def save(self, path: str = 'outputs/bert_model'):
+    def save(self, path: str = None):
         """Save the fine-tuned model and tokenizer."""
-        import os
-        os.makedirs(path, exist_ok=True)
-        self.model.save_pretrained(path)
-        self.tokenizer.save_pretrained(path)
-        print(f"Model saved to {path}/")
+        if path is None:
+            path = OUTPUT_DIR / 'bert_model'
+        path = Path(path)
+        try:
+            path.mkdir(parents=True, exist_ok=True)
+            self.model.save_pretrained(str(path))
+            self.tokenizer.save_pretrained(str(path))
+            print(f"Model saved to {path}/")
+        except (OSError, PermissionError) as e:
+            print(f"⚠️ Warning: Could not save model: {e}")
 
-    def load(self, path: str = 'outputs/bert_model'):
+    def load(self, path: str = None):
         """Load a previously saved fine-tuned model."""
-        self.tokenizer = AutoTokenizer.from_pretrained(path)
-        self.model = AutoModelForSequenceClassification.from_pretrained(path)
+        if path is None:
+            path = OUTPUT_DIR / 'bert_model'
+        path = Path(path)
+        try:
+            self.tokenizer = AutoTokenizer.from_pretrained(str(path))
+            self.model = AutoModelForSequenceClassification.from_pretrained(str(path))
         self.model.to(self.device)
         self.is_trained = True
         print(f"Model loaded from {path}/")
