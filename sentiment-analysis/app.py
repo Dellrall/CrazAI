@@ -104,20 +104,50 @@ def preprocess_text(text: str, cleaner: TextCleaner, tokenizer: TextTokenizer) -
 def load_and_train_models(sample_size: int = None):
     """Load IMDB data and train NB + SVM + OnlineLearner. Cached after first run."""
     loader = DatasetLoader()
+    print("[DEBUG] Loading dataset...")
     df = loader.load_imdb(str(DATA_DIR / 'imdb'))
+    print(f"[DEBUG] Dataset loaded: {len(df)} rows, columns: {list(df.columns)}")
+    
+    if len(df) == 0:
+        st.error("❌ Dataset failed to load. Please run: `python3 setup_dataset.py`")
+        st.stop()
+    
     if sample_size:
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
+        print(f"[DEBUG] Sampled to {len(df)} rows")
 
     cleaner = TextCleaner()
     tokenizer = TextTokenizer()
     
-    # Skip preprocessing if we already have the fully processed column
+    # CRITICAL: Check for 'processed' column FIRST
+    # Lemmatization takes ~2 sec/text. 50K rows = 27+ hours if re-processing!
     if 'processed' not in df.columns:
-        if 'cleaned' not in df.columns:
-            df['cleaned'] = df['text'].apply(cleaner.clean)
-        if 'tokens' not in df.columns:
-            df['tokens'] = df['cleaned'].apply(tokenizer.preprocess)
-        df['processed'] = df['tokens'].apply(lambda t: ' '.join(t))
+        print("[DEBUG] ⚠️ 'processed' column missing! Auto-preprocessing...")
+        print(f"[DEBUG] This will take ~{len(df) * 2 / 3600:.1f} hours for {len(df)} rows")
+        
+        # Only allow preprocessing on small samples locally
+        if len(df) > 5000:
+            st.error(f"❌ Dataset too large to auto-preprocess ({len(df):,} rows)\n\n"
+                    f"Would take ~{len(df) * 2 / 3600:.1f}+ hours.")
+            st.info("**Solution:** Run this once:\n"
+                   "```bash\n"
+                   "python3 setup_dataset.py\n"
+                   "```")
+            st.stop()
+        
+        with st.spinner("⏳ Preprocessing dataset (slow - 2s per row)..."):
+            if 'cleaned' not in df.columns:
+                print("[DEBUG] Cleaning text...")
+                df['cleaned'] = df['text'].apply(cleaner.clean)
+            
+            if 'tokens' not in df.columns:
+                print("[DEBUG] Tokenizing...")
+                df['tokens'] = df['cleaned'].apply(tokenizer.preprocess)
+            
+            df['processed'] = df['tokens'].apply(lambda t: ' '.join(t))
+            print("[DEBUG] Preprocessing complete")
+    else:
+        print("[DEBUG] Using cached 'processed' column ✓")
 
     texts = df['processed'].tolist()
     labels = df['label'].tolist()
