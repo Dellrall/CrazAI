@@ -54,31 +54,11 @@ st.set_page_config(
 
 processed_csv = DATA_DIR / 'processed' / 'imdb_processed.csv'
 
-def check_dataset_availability():
-    """Check if dataset is ready before loading models."""
-    if not processed_csv.exists():
-        st.error("❌ **Dataset not found**")
-        st.info(
-            "The preprocessed IMDB dataset is missing. "
-            "Run this **one-time setup** to download and preprocess:\n\n"
-            "```bash\n"
-            "python3 setup_dataset.py\n"
-            "```\n\n"
-            "This will:\n"
-            "1. Download IMDB reviews (~80MB)\n"
-            "2. Preprocess (clean, tokenize, lemmatize)\n"
-            "3. Save to `data/processed/imdb_processed.csv`\n\n"
-            "**Takes 2-3 minutes, runs only once.**"
-        )
-        return False
-    return True
-
-# Check on first load only
-if 'dataset_checked' not in st.session_state:
-    st.session_state.dataset_checked = check_dataset_availability()
-
-if not st.session_state.dataset_checked:
-    st.stop()
+if not processed_csv.exists():
+    st.info(
+        "Using the raw IMDB dataset because `data/processed/imdb_processed.csv` is missing. "
+        "The app will still work, but startup may be slower. For faster restarts, run `python3 setup_dataset.py` once."
+    )
 
 # ─────────────────────────────────────────────
 
@@ -146,15 +126,13 @@ def load_and_train_models(sample_size: int = None):
     if sample_size:
         df = df.sample(n=sample_size, random_state=42).reset_index(drop=True)
 
-    # Dataset should already have 'processed' column from setup_dataset.py
-    if 'processed' not in df.columns:
-        # This shouldn't happen if check_dataset_availability() passed
-        raise RuntimeError(
-            "Dataset missing 'processed' column. "
-            "Run: python3 setup_dataset.py"
-        )
+    # The models can train directly on raw text, so we avoid expensive
+    # lemmatization at startup when the processed cache is missing.
+    if 'processed' in df.columns:
+        texts = df['processed'].tolist()
+    else:
+        texts = df['text'].tolist()
 
-    texts = df['processed'].tolist()
     labels = df['label'].tolist()
 
     cleaner = TextCleaner()
