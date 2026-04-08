@@ -4,6 +4,7 @@ import sys
 import os
 import unittest
 import numpy as np
+from unittest.mock import patch
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
@@ -84,6 +85,28 @@ class TestTextCleaner(unittest.TestCase):
         self.assertNotIn('wtf', result)
         self.assertNotIn(':(', result)
 
+    def test_normalizes_positive_unicode_emoji(self):
+        result = self.cleaner.clean('That movie was great 😊')
+        self.assertIn('awesome', result)
+        self.assertNotIn('😊', result)
+
+    def test_normalizes_negative_unicode_emoji(self):
+        result = self.cleaner.clean('That movie was terrible 😡')
+        self.assertIn('awful', result)
+        self.assertNotIn('😡', result)
+
+    def test_normalizes_neutral_unicode_emoji(self):
+        result = self.cleaner.clean('That movie was okay 😐')
+        self.assertIn('neutral', result)
+        self.assertNotIn('😐', result)
+
+    def test_cleaner_works_without_emoji_package(self):
+        with patch('src.preprocessing.text_cleaner.emoji', None):
+            result = self.cleaner.clean('That movie was great 😊')
+
+        self.assertIn('awesome', result)
+        self.assertNotIn('😊', result)
+
     def test_normalizes_elongated_spelling(self):
         result = self.cleaner.clean('This movie is goooooddddddd')
         self.assertIn('good', result)
@@ -153,6 +176,18 @@ class TestTextTokenizer(unittest.TestCase):
 
         self.assertIn('awesome', tokens)
         self.assertNotIn('lol', tokens)
+
+    def test_preprocess_handles_unicode_emoji_normalization(self):
+        cleaned = self.cleaner.clean('That movie was great 😊')
+        tokens = self.tokenizer.preprocess(cleaned)
+
+        self.assertIn('awesome', tokens)
+
+    def test_preprocess_handles_neutral_unicode_emoji(self):
+        cleaned = self.cleaner.clean('That movie was okay 😐')
+        tokens = self.tokenizer.preprocess(cleaned)
+
+        self.assertIn('neutral', tokens)
 
     def test_preprocess_handles_elongated_spelling(self):
         cleaned = self.cleaner.clean('This movie is goooooddddddd')

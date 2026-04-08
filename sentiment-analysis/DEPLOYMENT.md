@@ -249,14 +249,12 @@ def collect_reviews(urls):
 
 - ✅ `src/crawler/dataset_loader.py` — Absolute paths + auto-fallback
 - ✅ `src/crawler/review_crawler.py` — Absolute paths
-- ✅ `src/online_learning/online_learner.py` — Absolute paths
-- ✅ `src/online_learning/feedback_collector.py` — Absolute paths  
+- ✅ `src/online_learning/online_learner.py` — Absolute paths + feedback storage
 - ✅ `src/models/bert_model.py` — Absolute paths
 - ✅ `src/evaluation/evaluator.py` — Absolute paths
 - ✅ `app.py` — Auto-preprocess + better errors
 - ✅ `main.py` — Absolute paths
 - ✅ `setup_dataset.py` — One-time preprocessor script
-- ✅ `config.py` — Config template
 
 ---
 

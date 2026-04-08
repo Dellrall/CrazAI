@@ -6,23 +6,21 @@ Runs the complete NLP pipeline:
   Week 3-4:   Data loading, cleaning, preprocessing
   Week 5-6:   Naïve Bayes training & evaluation
   Week 7-8:   SVM training & evaluation
-  Week 9-10:  BERT training & evaluation
   Final:      Model comparison & report
 
 Usage:
-    # Full pipeline (all models)
+    # Full pipeline (Naïve Bayes + SVM)
     python main.py
 
-    # Skip BERT (fast run for NB + SVM only)
-    python main.py --skip-bert
-
-    # Skip BERT and SVM
+    # Naïve Bayes only
     python main.py --nb-only
 """
 
 import argparse
 import os
 import sys
+import time
+from functools import wraps
 from pathlib import Path
 
 # Get absolute paths
@@ -37,9 +35,31 @@ OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 from src.crawler.dataset_loader import DatasetLoader
 from src.preprocessing.text_cleaner import TextCleaner
 from src.preprocessing.tokenizer import TextTokenizer
-from src.preprocessing.feature_extractor import FeatureExtractor
 from src.evaluation.evaluator import ModelEvaluator
-from src.utils.helpers import print_header, timer, ensure_dir
+
+
+def ensure_dir(path: str):
+    """Create directory if it doesn't exist."""
+    os.makedirs(path, exist_ok=True)
+
+
+def timer(func):
+    """Decorator to time function execution."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        elapsed = time.time() - start
+        print(f"[{func.__name__}] completed in {elapsed:.2f}s")
+        return result
+    return wrapper
+
+
+def print_header(title: str, width: int = 60):
+    """Print a formatted section header."""
+    print(f"\n{'=' * width}")
+    print(f"  {title}")
+    print(f"{'=' * width}")
 
 
 # ─────────────────────────────────────────────
@@ -109,21 +129,6 @@ def run_svm(texts: list, labels: list) -> dict:
 
 
 # ─────────────────────────────────────────────
-# Week 9–10: BERT
-# ─────────────────────────────────────────────
-
-@timer
-def run_bert(texts: list, labels: list, epochs: int = 3, batch_size: int = 16) -> dict:
-    from src.models.bert_model import BERTSentimentModel
-    bert = BERTSentimentModel(model_name='distilbert-base-uncased')
-    print(f"  Training on {int(len(texts)*0.8):,} samples, testing on {int(len(texts)*0.2):,}")
-    print(f"  epochs={epochs}, batch_size={batch_size}")
-    metrics = bert.train(texts, labels, epochs=epochs, batch_size=batch_size)
-    bert.save(str(OUTPUT_DIR / 'bert_model'))
-    return metrics, bert
-
-
-# ─────────────────────────────────────────────
 # Comparison
 # ─────────────────────────────────────────────
 
@@ -146,16 +151,10 @@ def print_comparison(evaluator: ModelEvaluator):
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Sentiment Analysis Pipeline')
-    parser.add_argument('--skip-bert', action='store_true',
-                        help='Skip BERT training (much faster)')
     parser.add_argument('--nb-only', action='store_true',
                         help='Only run Naïve Bayes')
     parser.add_argument('--sample', type=int, default=None,
                         help='Limit dataset to N samples (e.g. --sample 5000)')
-    parser.add_argument('--bert-epochs', type=int, default=3,
-                        help='Number of BERT training epochs (default: 3)')
-    parser.add_argument('--bert-batch', type=int, default=16,
-                        help='BERT batch size (reduce to 8 if OOM, default: 16)')
     return parser.parse_args()
 
 
@@ -185,24 +184,7 @@ def main():
     evaluator.add_result('SVM', svm_metrics)
     print(f"\n{svm_metrics['report']}")
 
-    if args.skip_bert:
-        print_header("RESULTS (NB + SVM)")
-        print_comparison(evaluator)
-        return
-
-    # ── Step 4: BERT ──────────────────────────────
-    print_header("STEP 4: BERT / DistilBERT (Week 9–10)")
-    print("  Note: This will take several minutes on CPU.")
-    print("  Use --skip-bert to skip, or --sample 2000 to use a smaller dataset.\n")
-    bert_metrics, bert_model = run_bert(
-        texts, labels,
-        epochs=args.bert_epochs,
-        batch_size=args.bert_batch
-    )
-    evaluator.add_result('DistilBERT', bert_metrics)
-    print(f"\n{bert_metrics['report']}")
-
-    # ── Step 5: Comparison ────────────────────────
+    # ── Step 4: Comparison ────────────────────────
     print_header("FINAL COMPARISON")
     print_comparison(evaluator)
 

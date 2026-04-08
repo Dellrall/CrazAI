@@ -34,8 +34,7 @@ from src.preprocessing.text_cleaner import TextCleaner
 from src.preprocessing.tokenizer import TextTokenizer
 from src.models.naive_bayes import NaiveBayesModel
 from src.models.svm_model import SVMModel
-from src.online_learning.online_learner import OnlineLearner
-from src.online_learning.feedback_collector import FeedbackCollector
+from src.online_learning.online_learner import OnlineLearner, FeedbackCollector
 
 # ─────────────────────────────────────────────
 # Page config

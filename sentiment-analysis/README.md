@@ -47,7 +47,7 @@ Open http://localhost:8501 in your browser. ✨
 ```
 sentiment-analysis/
 ├── app.py                          # Main Streamlit app
-├── main.py                         # Batch pipeline (NB + SVM + BERT)
+├── main.py                         # Batch pipeline (NB + SVM)
 ├── setup_dataset.py                # One-time dataset setup
 ├── requirements.txt                # Python dependencies
 │
@@ -57,20 +57,15 @@ sentiment-analysis/
 │   │   └── review_crawler.py       # Web scraper for reviews
 │   ├── preprocessing/              # Text processing pipeline
 │   │   ├── text_cleaner.py         # HTML, emoji, slang cleanup
-│   │   ├── tokenizer.py            # Tokenization + lemmatization
-│   │   ├── feature_extractor.py    # TF-IDF feature extraction
-│   │   └── dictionary_normalizer.py# Slang normalization
+│   │   ├── tokenizer.py            # Tokenization + lemmatization + dictionary normalization
+│   │   └── feature_extractor.py    # TF-IDF feature extraction
 │   ├── models/                     # Sentiment classifiers
 │   │   ├── naive_bayes.py          # Naïve Bayes classifier
 │   │   ├── svm_model.py            # SVM classifier
-│   │   └── bert_model.py           # BERT fine-tuning
 │   ├── online_learning/            # Incremental learning
-│   │   ├── online_learner.py       # Online model updates
-│   │   └── feedback_collector.py   # User feedback storage
+│   │   └── online_learner.py       # Online model updates + feedback storage
 │   ├── evaluation/                 # Model evaluation
 │   │   └── evaluator.py            # Metrics & comparison
-│   └── utils/
-│       └── helpers.py              # Utility functions
 │
 ├── data/
 │   ├── imdb/                       # IMDB dataset (auto-downloaded)
@@ -103,11 +98,8 @@ streamlit run app.py
 
 ### Via CLI (Batch Processing)
 ```bash
-# Train all models (NB + SVM + BERT)
+# Train all supported batch models (NB + SVM)
 python3 main.py
-
-# Skip BERT (faster)
-python3 main.py --skip-bert
 
 # Naïve Bayes only
 python3 main.py --nb-only
@@ -123,7 +115,6 @@ Output saved to `outputs/results.csv` and charts.
 |-------|----------|-------|
 | Naïve Bayes | 86-88% | <1s per prediction |
 | SVM | 86-88% | ~2-5s per prediction |
-| BERT | 90%+ | ~5s per prediction |
 
 **Dataset size impact:**
 - 2,000 reviews → 1 min setup
@@ -195,12 +186,6 @@ Tests training, prediction, and evaluation on a small sample dataset.
 - **Speed**: Moderate
 - **Accuracy**: ~86-88%
 
-### BERT
-- **Model**: DistilBERT (fine-tuned)
-- **Speed**: Slowest (~5s per prediction)
-- **Accuracy**: ~90%+
-- **Note**: GPU recommended for training
-
 ### Online Learner
 - **Algorithm**: SGDClassifier with HashingVectorizer
 - **Updates**: Real-time with user feedback
@@ -221,7 +206,7 @@ Lemmatizer (reduce to base form: "running" → "run")
    ↓
 Feature Extractor (TF-IDF vectors)
    ↓
-Classifier (NB / SVM / BERT)
+Classifier (NB / SVM)
    ↓
 Sentiment: 0 (Negative) or 1 (Positive)
 ```
@@ -249,7 +234,6 @@ See [LICENSE](../LICENSE)
 - **IMDB Dataset**: http://ai.stanford.edu/~amaas/data/sentiment/
 - **Streamlit Docs**: https://docs.streamlit.io
 - **Scikit-Learn**: https://scikit-learn.org
-- **HuggingFace Transformers**: https://huggingface.co/docs/transformers
 - **spaCy Lemmatizer**: https://spacy.io
 
 ---
