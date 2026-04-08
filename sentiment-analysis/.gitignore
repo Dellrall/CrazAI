@@ -1,0 +1,24 @@
+# Virtual environment
+venv/
+
+# Datasets (large, re-downloadable)
+data/imdb/aclImdb/
+data/raw/
+data/feedback/
+
+# Keep processed CSV for Streamlit Cloud deployment
+# data/processed/ is NOT ignored — imdb_processed.csv is needed remotely
+
+# Model checkpoints
+outputs/bert_model/
+*.pkl
+*.joblib
+*.tar.gz
+
+# Streamlit cache
+.streamlit/
+
+# Python
+__pycache__/
+*.py[co]
+.pytest_cache/

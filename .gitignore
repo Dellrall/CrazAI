@@ -205,3 +205,13 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Sentiment Analysis project — data & outputs
+sentiment-analysis/data/imdb/
+sentiment-analysis/data/raw/
+sentiment-analysis/data/processed/
+sentiment-analysis/data/feedback/
+sentiment-analysis/outputs/bert_model/
+sentiment-analysis/venv/
+*.pkl
+*.tar.gz
