@@ -1,3 +1,2 @@
 Model,Accuracy,Precision,Recall,F1 Score
-Naïve Bayes,0.8622,0.8624,0.8622,0.8622
-SVM,0.8849,0.8850,0.8849,0.8849
+Naïve Bayes,0.7000,0.7198,0.7000,0.6931
